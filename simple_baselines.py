@@ -55,11 +55,11 @@ pipeline = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_feat
 
 
 
-params = dict(pca__n_components=[0.9, 0.8, 0.7],
-              forest__n_estimators=[100, 200, 300],
-              #forest__n_jobs=[-1]
+params = dict(pca__n_components=[0.9, 0.8, 0.7, 0.6],
+              forest__n_estimators=[100, 200, 300, 600,900,1000,2000,4000],
+              vectorizer__max_features=[100,500,1000,2000]
               )
-grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 2, shuffle=True), n_jobs=2)
+grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 5, shuffle=True), n_jobs=-1)
 grid_search.fit(data, labels)
 print(grid_search.grid_scores_)
 print(grid_search.best_params_)
