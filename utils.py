@@ -10,7 +10,7 @@ def visualize_representation(repr, labels, title='', color_map=('red', 'green', 
     lda = LDA(n_components=2)
     proj = lda.fit(repr, labels).transform(repr)
 
-    plt.figure()
+    fig = plt.figure()
     plt.title(title)
     points = []
     for i,c in enumerate(classes):
@@ -18,3 +18,5 @@ def visualize_representation(repr, labels, title='', color_map=('red', 'green', 
         p = plt.scatter(current_class[:,0], current_class[:,1], color=color_map[i], alpha=0.4)
         points.append(p)
     plt.legend(points, classes, scatterpoints=1, loc='upper right', ncol=2, fontsize=8)
+
+    return fig

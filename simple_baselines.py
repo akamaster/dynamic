@@ -22,10 +22,7 @@ labels = data[:,1]
 data = data[:,0]
 tokens = [tokenize(line) for line in data]
 
-from sklearn.feature_extraction.text import CountVectorizer
-#visualize_representation(x, data[:,1])
-#plt.show()
-
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -48,34 +45,55 @@ class DenseTransformer(TransformerMixin):
     def get_params(self, *args,**kwargs):
         return {}
 
-pipeline = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_features=1000)),
-                     ('denser', DenseTransformer()),
-                     ('pca', PCA(n_components=0.8)),
-                     ('forest', RandomForestClassifier(n_estimators=10000))])
+def experiment_1_bag_of_word():
+    pipeline_repr = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_features=1000)),
+                         ('denser', DenseTransformer())])
+    fig = visualize_representation(pipeline_repr.fit_transform(data),labels,
+                             title='Visualization of feature space of Bag of Words representation')
 
+    fig.savefig('bag_of_words_vis.png', dpi=400)
 
+    return
 
-params = dict(pca__n_components=[0.9, 0.8, 0.7],
-              forest__n_estimators=[100, 200, 300],
-              #forest__n_jobs=[-1]
-              )
-grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 2, shuffle=True), n_jobs=2)
-grid_search.fit(data, labels)
-print(grid_search.grid_scores_)
-print(grid_search.best_params_)
-print(grid_search.best_score_)
+    pipeline = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_features=1000)),
+                         ('denser', DenseTransformer()),
+                         ('pca', PCA(n_components=0.8)),
+                         ('forest', RandomForestClassifier(n_estimators=10000))])
 
+    params = dict(pca__n_components=[0.9, 0.8, 0.7],
+                  forest__n_estimators=[100, 200, 300],
+                  #forest__n_jobs=[-1]
+                  )
+    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 5, shuffle=True), n_jobs=2)
+    grid_search.fit(data, labels)
+    print("Best params for bag of words:")
+    print(grid_search.best_params_)
+    print(grid_search.best_score_)
+    print("Score is")
+    scores = []
 
-scores = []
+    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
+    for train_id, test_id in skf:
+        train_set = data[train_id]
+        label_train = labels[train_id]
+        test_set = data[test_id]
+        pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
+        scores.append(pipeline.score(test_set, labels[test_id]))
 
-skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-for train_id, test_id in skf:
-    train_set = data[train_id]
-    label_train = labels[train_id]
-    test_set = data[test_id]
-    pipeline.set_params(**grid_search.best_params_).fit(train_set,labels[train_id])
-    scores.append(pipeline.score(test_set, labels[test_id]))
+    scores = np.array(scores)
+    print(scores)
+    print(scores.mean(), scores.std())
 
-scores = np.array(scores)
-print(scores)
-print(scores.mean(), scores.std())
+def experiment2_tfidf():
+    pipeline = Pipeline([('vectorizer', TfidfVectorizer(tokenizer=tokenize, max_features=1000, smooth_idf=True)),
+                         ('denser', DenseTransformer()),
+                         #('pca', PCA(n_components=2))
+                         ])
+
+    fig = visualize_representation(pipeline.fit_transform(data), labels,
+                             title='Visualiation of feature space of TfIdf representation')
+    fig.savefig('tfidf_repr.png', dpi=400)
+
+experiment_1_bag_of_word()
+experiment2_tfidf()
+plt.show()
