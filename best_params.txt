@@ -1,0 +1,13 @@
+Best params for bag of words:
+{'forest__criterion': 'gini', 'pca__n_components': 0.8, 'forest__max_depth': 50, 'vectorizer__max_features': 2000, 'forest__min_samples_split': 4, 'forest__n_estimators': 600}
+0.860432330827
+Score is
+[ 0.86416862  0.8501171   0.84507042  0.84669811  0.87971698]
+0.857154246232 0.013138869185
+
+Best params for tfidf:
+{'forest__criterion': 'gini', 'pca__n_components': 0.6, 'forest__max_depth': 50, 'vectorizer__max_features': 2000, 'forest__min_samples_split': 2, 'vectorizer__smooth_idf': True, 'forest__n_estimators': 100}
+0.864661654135
+Score is
+[ 0.85714286  0.85714286  0.84507042  0.85377358  0.88207547]
+0.859041038685 0.0123346299133
