@@ -10,9 +10,9 @@ non_normalized_initial_300 = [string_processor(line) for line in file['Variable'
 non_normalized_initial_300 = np.array(non_normalized_initial_300)
 
 labels_initial_300 = np.array([x.strip() for x in file['context']])
-labels_initial_300 = np.array(['fitness' if l in set(['fitness', 'active life', 'active life; fitness'])
+labels_initial_300 = np.array(['active lifestyle' if l in set(['fitness', 'active life', 'active life; fitness'])
         else 'environment' if l in set(['arrangement', 'barrier'])
-                           else 'functional' for l in labels_initial_300])
+                           else 'physical capacity' for l in labels_initial_300])
 
 print(non_normalized_initial_300.shape, labels_initial_300.shape)
 
@@ -25,14 +25,14 @@ def get_initial_data(file):
 
 def extract_dataset(file):
     non_normalized = get_initial_data(file)
-    labels_full = np.array([' '*11]*len(non_normalized))
+    labels_full = np.array([' '*17]*len(non_normalized))
     labels = np.asarray(file['Activity'].values, dtype ='U')
-    labels_full[labels!='nan'] = 'fitness'
+    labels_full[labels!='nan'] = 'active lifestyle'
     labels = np.asarray(file['Environment'].values, dtype ='U')
     labels_full[labels!='nan'] = 'environment'
     labels = np.asarray(file['Physical Function'].values, dtype ='U')
-    labels_full[labels!='nan'] = 'functional'
-    labels_idx = labels_full != ' '*11
+    labels_full[labels!='nan'] = 'physical capacity'
+    labels_idx = labels_full != ' '*17
     labels_full = labels_full[labels_idx]
     non_normalized = non_normalized[labels_idx]
     return non_normalized, labels_full
@@ -51,7 +51,7 @@ non_normalized_nonactivity = []
 for line in file['variable descriptions']:
     non_normalized_nonactivity.append(string_processor(line))
 
-non_normalized_nonactivity_labels = np.array(['neither']*len(non_normalized_nonactivity))
+non_normalized_nonactivity_labels = np.array(['other']*len(non_normalized_nonactivity))
 
 text = np.hstack((non_normalized_initial_300,
                   non_normalized_HK,
