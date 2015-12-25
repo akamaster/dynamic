@@ -11,3 +11,19 @@ Best params for tfidf:
 Score is
 [ 0.85714286  0.85714286  0.84507042  0.85377358  0.88207547]
 0.859041038685 0.0123346299133
+
+
+Best params for word2vec_random forest:
+{'forest__criterion': 'gini', 'forest__max_depth': 50, 'forest__min_samples_split': 2, 'forest__n_estimators': 300}
+0.863187588152
+Score is
+[ 0.8735363   0.8618267   0.85882353  0.86320755  0.85377358]
+0.862233531829 0.00651253562295
+
+
+Best params for word2vec_svm forest:
+{'svm__C': 40, 'svm__kernel': 'linear'}
+0.866478608369
+Score is
+[ 0.8852459   0.85480094  0.88        0.875       0.85849057]
+0.870707480889 0.0119867715755

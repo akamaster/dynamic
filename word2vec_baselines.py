@@ -64,7 +64,7 @@ def experiment_4():
     grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels,3, shuffle=True), n_jobs=-1)
 
     grid_search.fit(data, labels)
-    print("Best params for word2vec_random forest:", file=log_file)
+    print("Best params for word2vec_svm forest:", file=log_file)
     print(grid_search.best_params_, file=log_file)
     print(grid_search.best_score_, file=log_file)
     print("Score is", file=log_file)
@@ -74,7 +74,7 @@ def experiment_4():
     for train_id, test_id in skf:
         train_set = data[train_id]
         test_set = data[test_id]
-        pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
+        pipeline.set_params(**grid_search.best_params_).fit(train_set, labels[train_id])
         scores.append(pipeline.score(test_set, labels[test_id]))
 
     scores = np.array(scores)

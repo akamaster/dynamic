@@ -23,7 +23,6 @@ def tokenize(text):
 data = np.load('data.npz')['arr_0']
 labels = data[:,1]
 data = data[:,0]
-tokens = [tokenize(line) for line in data]
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.pipeline import Pipeline
@@ -69,7 +68,7 @@ def experiment_1_bag_of_word():
               forest__max_depth=[None,100, 50, 75],
               forest__min_samples_split=[2,4,8,10,100])
 
-    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 5, shuffle=True), n_jobs=-1)
+    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 3, shuffle=True), n_jobs=-1)
 
     grid_search.fit(data, labels)
     print("Best params for bag of words:", file=log_file)
@@ -108,7 +107,7 @@ def experiment2_tfidf():
               forest__max_depth = [None, 100, 50, 75],
               forest__min_samples_split = [2,4,8,10,100])
 
-    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 5, shuffle=True), n_jobs=-1)
+    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 3, shuffle=True), n_jobs=-1)
 
     grid_search.fit(data, labels)
     print("Best params for tfidf:", file=log_file)
