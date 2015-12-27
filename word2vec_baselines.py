@@ -11,16 +11,16 @@ import numpy as np
 
 npz_file = np.load('word2vec_sum_repr.npz')
 
-data = npz_file['data']
-print(data.dtype)
-labels = npz_file['labels']
-print(np.isfinite(data).all(), data.shape, labels.shape)
+data_train = npz_file['data_train']
+data_test = npz_file['data_test']
+labels_train = npz_file['labels_train']
+labels_test = npz_file['labels_test']
 log_file = open('logs_word2vec_baselines.txt', mode='w')
 
 def experiment_3():
     """
     Note: excecution of this method takes a lot of time: using ec2 c4.8xlarge, results yielded
-    after 7 hours. Please refer to 'best_params.txt' to get optimal parameters for all experiments.
+    after 1 hours. Please refer to 'best_params.txt' to get optimal parameters for all experiments.
     :return:
     """
     pipeline = Pipeline([('forest', RandomForestClassifier(n_estimators=100))])
@@ -30,30 +30,22 @@ def experiment_3():
               forest__max_depth=[None,100, 50, 75],
               forest__min_samples_split=[2,4,8,10,100])
 
-    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels,3, shuffle=True), n_jobs=-1)
+    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels_train,3, shuffle=True), n_jobs=-1)
 
-    grid_search.fit(data, labels)
+    grid_search.fit(data_train, labels_train)
     print("Best params for word2vec_random forest:", file=log_file)
     print(grid_search.best_params_, file=log_file)
     print(grid_search.best_score_, file=log_file)
     print("Score is", file=log_file)
-    scores = []
 
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        test_set = data[test_id]
-        pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
-        scores.append(pipeline.score(test_set, labels[test_id]))
 
-    scores = np.array(scores)
-    print(scores, file=log_file)
-    print(scores.mean(), scores.std(), file=log_file)
+    pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(data_train, labels_train)
+    print(pipeline.score(data_test, labels_test), file=log_file)
 
 def experiment_4():
     """
-    Note: excecution of this method takes a lot of time: using ec2 c4.8xlarge, results yielded
-    after 7 hours. Please refer to 'best_params.txt' to get optimal parameters for all experiments.
+    Note: excecution of this method takes a relatively small time: using ec2 c4.8xlarge, results yielded
+    after 5 minutes. Please refer to 'best_params.txt' to get optimal parameters for all experiments.
     :return:
     """
     pipeline = Pipeline([('svm', SVC())])
@@ -61,26 +53,23 @@ def experiment_4():
               svm__C=[0.1, 1, 5, 10, 50, 100],
               svm__kernel=['rbf', 'poly', 'linear'])
 
-    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels,3, shuffle=True), n_jobs=-1)
+    grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels_train,3, shuffle=True), n_jobs=-1)
 
-    grid_search.fit(data, labels)
+    grid_search.fit(data_train, labels_train)
     print("Best params for word2vec_svm forest:", file=log_file)
     print(grid_search.best_params_, file=log_file)
     print(grid_search.best_score_, file=log_file)
     print("Score is", file=log_file)
-    scores = []
 
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        test_set = data[test_id]
-        pipeline.set_params(**grid_search.best_params_).fit(train_set, labels[train_id])
-        scores.append(pipeline.score(test_set, labels[test_id]))
+    pipeline.set_params(**grid_search.best_params_).fit(data_train, labels_train)
 
-    scores = np.array(scores)
-    print(scores, file=log_file)
-    print(scores.mean(), scores.std(), file=log_file)
+    print(pipeline.score(data_test, labels_test), file=log_file)
+
+def statistics():
+    pass
 
 experiment_3()
 experiment_4()
 log_file.close()
+
+#TODO: generate basic statistics
