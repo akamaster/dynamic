@@ -8,6 +8,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.svm import SVC
 import numpy as np
+from sklearn.metrics import precision_recall_fscore_support
 
 npz_file = np.load('word2vec_sum_repr.npz')
 
@@ -41,6 +42,10 @@ def experiment_3():
 
     pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(data_train, labels_train)
     print(pipeline.score(data_test, labels_test), file=log_file)
+    print('Stats for Word2Vec Random forest: Rows - precision, recall, f1, support; '
+          'Columns: environment active lifestyle physical capacity other', file=log_file)
+    print(precision_recall_fscore_support(labels_test, pipeline.predict(data_test),
+              labels=['environment', 'active lifestyle', 'physical capacity', 'other']), file=log_file)
 
 def experiment_4():
     """
@@ -64,12 +69,13 @@ def experiment_4():
     pipeline.set_params(**grid_search.best_params_).fit(data_train, labels_train)
 
     print(pipeline.score(data_test, labels_test), file=log_file)
-
+    print('Stats for Word2Vec SVM: Rows - precision, recall, f1, support; '
+          'Columns: environment active lifestyle physical capacity other', file=log_file)
+    print(precision_recall_fscore_support(labels_test, pipeline.predict(data_test),
+              labels=['environment', 'active lifestyle', 'physical capacity', 'other']), file=log_file)
 def statistics():
     pass
 
 experiment_3()
 experiment_4()
 log_file.close()
-
-#TODO: generate basic statistics
