@@ -24,6 +24,15 @@ data = np.load('data.npz')['arr_0']
 labels = data[:,1]
 data = data[:,0]
 
+from sklearn.cross_validation import train_test_split
+data_train, data_test, labels_train, labels_test = train_test_split(data, labels,
+                                                                    test_size=0.15,
+                                                                    stratify=labels,
+                                                                    random_state=42)
+print(data_train.shape, data_test.shape)
+data=None
+labels=None
+
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
@@ -70,23 +79,20 @@ def experiment_1_bag_of_word():
 
     grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 3, shuffle=True), n_jobs=-1)
 
-    grid_search.fit(data, labels)
+    grid_search.fit(data_train, labels_train)
     print("Best params for bag of words:", file=log_file)
     print(grid_search.best_params_, file=log_file)
     print(grid_search.best_score_, file=log_file)
     print("Score is", file=log_file)
-    scores = []
 
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        test_set = data[test_id]
-        pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
-        scores.append(pipeline.score(test_set, labels[test_id]))
 
-    scores = np.array(scores)
-    print(scores, file=log_file)
-    print(scores.mean(), scores.std(), file=log_file)
+    pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(data_train,labels_train)
+    print(pipeline.score(data_test, labels_test), file=log_file)
+    print('Stats for Bag of Words: Rows - precision, recall, f1, support; '
+          'Columns: environment active lifestyle physical capacity other', file=log_file)
+    print(precision_recall_fscore_support(labels_test, pipeline.predict(data_test),
+              labels=['environment', 'active lifestyle', 'physical capacity', 'other']), file=log_file)
+
 
 def experiment2_tfidf():
     """
@@ -109,28 +115,25 @@ def experiment2_tfidf():
 
     grid_search = GridSearchCV(pipeline, param_grid=params, cv=StratifiedKFold(labels, 3, shuffle=True), n_jobs=-1)
 
-    grid_search.fit(data, labels)
+    grid_search.fit(data_train, labels_train)
     print("Best params for tfidf:", file=log_file)
     print(grid_search.best_params_, file=log_file)
     print(grid_search.best_score_, file=log_file)
     print("Score is", file=log_file)
-    scores = []
 
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        test_set = data[test_id]
-        pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
-        scores.append(pipeline.score(test_set, labels[test_id]))
+    pipeline.set_params(**grid_search.best_params_).set_params(forest__n_jobs=-1).fit(data_train, labels_train)
+    print(pipeline.score(data_test, labels_test), file=log_file)
+    print('Stats for TFIDF: Rows - precision, recall, f1, support; '
+          'Columns: environment active lifestyle physical capacity other', file=log_file)
 
-    scores = np.array(scores)
-    print(scores, file=log_file)
-    print(scores.mean(), scores.std(), file=log_file)
+    print(precision_recall_fscore_support(labels_test, pipeline.predict(data_test),
+              labels=['environment', 'active lifestyle', 'physical capacity', 'other']), file=log_file)
+
 
 def visualize_experiments():
     pipeline_repr = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_features=2000)),
                          ('denser', DenseTransformer())])
-    fig = visualize_representation(pipeline_repr.fit_transform(data),labels,
+    fig = visualize_representation(pipeline_repr.fit_transform(data_train),labels_train,
                              title='Visualization of feature space of Bag of Words representation')
 
     fig.savefig('bag_of_words_vis.png', dpi=400)
@@ -139,67 +142,13 @@ def visualize_experiments():
                          ('denser', DenseTransformer())
                          ])
 
-    fig = visualize_representation(pipeline.fit_transform(data), labels,
+    fig = visualize_representation(pipeline.fit_transform(data_train), labels_train,
                              title='Visualization of feature space of TfIdf representation')
     fig.savefig('tfidf_repr.png', dpi=400)
 
-def statistics():
-    print('Stats for Bag of Words: Rows - precision, recall, f1, support; '
-          'Columns: environment active lifestyle physical capacity other')
-    pipeline = Pipeline([('vectorizer', CountVectorizer(tokenizer=tokenize, max_features=1000)),
-                         ('denser', DenseTransformer()),
-                         ('pca', PCA(n_components=0.8)),
-                         ('forest', RandomForestClassifier(n_estimators=10000))])
-
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    reports = []
-    best_params = {'forest__criterion': 'gini',
-                   'pca__n_components': 0.8,
-                   'forest__max_depth': 50,
-                   'vectorizer__max_features': 2000,
-                   'forest__min_samples_split': 4,
-                   'forest__n_estimators': 600}
-
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        pipeline.set_params(**best_params).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
-        reports.append(precision_recall_fscore_support(labels[test_id], pipeline.predict(data[test_id]),
-              labels=['environment', 'active lifestyle', 'physical capacity', 'other']))
-
-    reports = np.array(reports)
-    print(reports.mean(axis=0))
-    print()
-
-    print('Stats for TFIDF: Rows - precision, recall, f1, support; '
-          'Columns: environment active lifestyle physical capacity other')
-
-
-    pipeline = Pipeline([('vectorizer', TfidfVectorizer(tokenizer=tokenize, max_features=1000)),
-                         ('denser', DenseTransformer()),
-                         ('pca', PCA(n_components=0.8)),
-                         ('forest', RandomForestClassifier(n_estimators=10000))])
-    skf = StratifiedKFold(labels, 5, random_state=42, shuffle=True)
-    best_params = {'forest__criterion': 'gini',
-                   'pca__n_components': 0.6,
-                   'forest__max_depth': 50,
-                   'vectorizer__max_features': 2000,
-                   'forest__min_samples_split': 2,
-                   'vectorizer__smooth_idf': True,
-                   'forest__n_estimators': 100}
-
-    report = []
-    for train_id, test_id in skf:
-        train_set = data[train_id]
-        pipeline.set_params(**best_params).set_params(forest__n_jobs=-1).fit(train_set,labels[train_id])
-        report.append(precision_recall_fscore_support(labels[test_id], pipeline.predict(data[test_id]),
-              labels=['environment', 'active lifestyle', 'physical capacity', 'other']))
-
-    report = np.array(report)
-    print(report.mean(axis=0))
 
 # Uncomment lines below to obtain best params.
-# experiment_1_bag_of_word()
-# experiment2_tfidf()
+experiment_1_bag_of_word()
+experiment2_tfidf()
 
 #visualize_experiments()
-statistics()
