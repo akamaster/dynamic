@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import lasagne
 import theano
 import theano.tensor as T
