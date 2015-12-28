@@ -1,29 +1,43 @@
 Best params for bag of words:
-{'forest__criterion': 'gini', 'pca__n_components': 0.8, 'forest__max_depth': 50, 'vectorizer__max_features': 2000, 'forest__min_samples_split': 4, 'forest__n_estimators': 600}
-0.860432330827
+{'forest__min_samples_split': 2, 'forest__criterion': 'gini', 'vectorizer__max_features': 2000, 'forest__n_estimators': 900, 'pca__n_components': 0.8, 'forest__max_depth': 50}
+0.856194690265
 Score is
-[ 0.86416862  0.8501171   0.84507042  0.84669811  0.87971698]
-0.857154246232 0.013138869185
+0.834375
+Stats for Bag of Words: Rows - precision, recall, f1, support; Columns: environment active lifestyle physical capacity other
+(array([ 0.8125    ,  0.77647059,  0.76923077,  0.94444444]),
+array([ 0.38235294,  0.94285714,  0.52631579,  0.94444444]),
+array([ 0.52      ,  0.8516129 ,  0.625     ,  0.94444444]),
+array([ 34, 140,  38, 108]))
 
 Best params for tfidf:
-{'forest__criterion': 'gini', 'pca__n_components': 0.6, 'forest__max_depth': 50, 'vectorizer__max_features': 2000, 'forest__min_samples_split': 2, 'vectorizer__smooth_idf': True, 'forest__n_estimators': 100}
-0.864661654135
+{'forest__min_samples_split': 2, 'forest__max_depth': None, 'forest__criterion': 'entropy', 'vectorizer__smooth_idf': True, 'forest__n_estimators': 200, 'pca__n_components': 0.6, 'vectorizer__max_features': 2000}
+0.855088495575
 Score is
-[ 0.85714286  0.85714286  0.84507042  0.85377358  0.88207547]
-0.859041038685 0.0123346299133
-
+0.840625
+Stats for TFIDF: Rows - precision, recall, f1, support; Columns: environment active lifestyle physical capacity other
+(array([ 0.93333333,  0.78235294,  0.83333333,  0.91891892]),
+array([ 0.41176471,  0.95      ,  0.52631579,  0.94444444]),
+array([ 0.57142857,  0.85806452,  0.64516129,  0.93150685]),
+array([ 34, 140,  38, 108]))
 
 Best params for word2vec_random forest:
-{'forest__criterion': 'gini', 'forest__max_depth': 50, 'forest__min_samples_split': 2, 'forest__n_estimators': 300}
-0.863187588152
+{'forest__max_depth': 75, 'forest__min_samples_split': 2, 'forest__n_estimators': 1000, 'forest__criterion': 'gini'}
+0.866629773105
 Score is
-[ 0.8735363   0.8618267   0.85882353  0.86320755  0.85377358]
-0.862233531829 0.00651253562295
-
+0.846875
+Stats for Word2Vec Random forest: Rows - precision, recall, f1, support; Columns: environment active lifestyle physical capacity other
+(array([ 1.        ,  0.80722892,  0.77272727,  0.89830508]),
+array([ 0.41176471,  0.95714286,  0.44736842,  0.98148148]),
+array([ 0.58333333,  0.87581699,  0.56666667,  0.9380531 ]),
+array([ 34, 140,  38, 108]))
 
 Best params for word2vec_svm forest:
-{'svm__C': 40, 'svm__kernel': 'linear'}
-0.866478608369
+{'svm__C': 50, 'svm__kernel': 'linear'}
+0.868843386829
 Score is
-[ 0.8852459   0.85480094  0.88        0.875       0.85849057]
-0.870707480889 0.0119867715755
+0.86875
+Stats for Word2Vec SVM: Rows - precision, recall, f1, support; Columns: environment active lifestyle physical capacity other
+(array([ 0.72727273,  0.8496732 ,  0.71794872,  0.98113208]),
+array([ 0.47058824,  0.92857143,  0.73684211,  0.96296296]),
+array([ 0.57142857,  0.88737201,  0.72727273,  0.97196262]),
+array([ 34, 140,  38, 108]))
