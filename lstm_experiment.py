@@ -237,7 +237,7 @@ import itertools
 all_combinations = list((dict(zip(grid_search_params.keys(), p)) for p in itertools.product(*grid_search_params.values())))
 
 for i, p in enumerate(all_combinations):
-    p['worker'] = 'W'+str(i)
+    p['worker_name'] = 'W'+str(i)
 
 
 def worker_helper(params):
