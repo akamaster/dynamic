@@ -41,3 +41,13 @@ Stats for Word2Vec SVM: Rows - precision, recall, f1, support; Columns: environm
 array([ 0.47058824,  0.92857143,  0.73684211,  0.96296296]),
 array([ 0.57142857,  0.88737201,  0.72727273,  0.97196262]),
 array([ 34, 140,  38, 108]))
+
+NN:lstm 1 layer(fwd):
+{'num_units_lstm': 300, 'num_units_dense1': 300}
+CV: score: 88.5
+Test score:0.88437, early stopping, iteration 1100
+
+NN: lstm 1 layer(fwd+bkwd)
+{'num_units_lstm': 300, 'num_units_dense1': 300}
+CV: score: 88.1, early stopping, iteration 1100
+TEST score: 89.06

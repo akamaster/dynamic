@@ -75,6 +75,9 @@ word2vec_repr_test, word2vec_labels_test, word2vec_vectors_full_test, word2vec_l
 np.savez('word2vec_sum_repr.npz',
          data_train=word2vec_repr_train, labels_train=word2vec_labels_train,
          data_test =word2vec_repr_test,   labels_test=word2vec_labels_test)
+
+print(word2vec_vectors_full_train.shape, word2vec_vectors_full_test.shape)
+
 np.savez('word2vec_full_repr.npz',
          data_train=word2vec_vectors_full_train, labels_train=word2vec_labels_train, seq_lens_train=word2vec_lens_train,
-         data_test =word2vec_vectors_full_test,   labels_test=word2vec_labels_test,    seq_len_test=word2vec_lens_test)
+         data_test =word2vec_vectors_full_test,   labels_test=word2vec_labels_test,  seq_lens_test=word2vec_lens_test)

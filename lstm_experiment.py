@@ -27,28 +27,31 @@ class ExactSeqOutput(lasagne.layers.MergeLayer):
         return (input[0], input[2])
 
 
-def build_nn(num_units_lstm=200, num_units_dense1=50, penalty_l_dense1=0.001, penalty_l_dense2=0.001, **kwargs):
+def build_nn(num_units_lstm=200, num_units_dense1=50, penalty_l_dense1=0.001, penalty_l_dense2=0.001, arch=1, **kwargs):
     print(locals())
     num_inputs, num_classes = 300, 4
     l_inp_words = InputLayer((None, None, num_inputs))
     batch_size, seq_length, _ = l_inp_words.shape
     l_inp_seq_lens = InputLayer((batch_size,))
 
-    l_lstm_fwd = LSTMLayer(l_inp_words, num_units=num_units_lstm, grad_clipping=0.4)
-    l_lstm_fwd_output = ExactSeqOutput([l_lstm_fwd, l_inp_seq_lens])
+    l_dropout1=None
 
-    #l_lstm_fwd2 = LSTMLayer(l_lstm_fwd, num_units=num_units, grad_clipping=0.4)
-    #l_lstm_fwd2_output = ExactSeqOutput([l_lstm_fwd2, l_inp_seq_lens])
+    if arch == 1:
+        l_lstm_fwd = LSTMLayer(l_inp_words, num_units=num_units_lstm, grad_clipping=0.4)
+        l_lstm_fwd_output = ExactSeqOutput([l_lstm_fwd, l_inp_seq_lens])
 
-    l_lstm_bkw = LSTMLayer(l_inp_words, num_units=num_units_lstm, backwards=True, grad_clipping=0.4)
-    l_lstm_bkw_output = ExactSeqOutput([l_lstm_bkw, l_inp_seq_lens])
+        l_dropout1 = DropoutLayer(l_lstm_fwd_output, p=0.5)
 
-    #l_lstm_bkw2 = LSTMLayer(l_lstm_bkw, num_units=num_units, backwards=True, grad_clipping=0.4)
-    #l_lstm_bkw2_output = ExactSeqOutput([l_lstm_bkw2, l_inp_seq_lens])
+    elif arch == 2:
+        l_lstm_fwd = LSTMLayer(l_inp_words, num_units=num_units_lstm, grad_clipping=0.4)
+        l_lstm_fwd_output = ExactSeqOutput([l_lstm_fwd, l_inp_seq_lens])
 
-    l_lstm_out = ConcatLayer([l_lstm_fwd_output, l_lstm_bkw_output], axis=1)
+        l_lstm_bkw = LSTMLayer(l_inp_words, num_units=num_units_lstm, backwards=True, grad_clipping=0.4)
+        l_lstm_bkw_output = ExactSeqOutput([l_lstm_bkw, l_inp_seq_lens])
 
-    l_dropout1 = DropoutLayer(l_lstm_out, p=0.5)
+        l_lstm_out = ConcatLayer([l_lstm_fwd_output, l_lstm_bkw_output], axis=1)
+        l_dropout1 = DropoutLayer(l_lstm_out, p=0.5)
+
     l_dense1 = DenseLayer(l_dropout1, num_units=num_units_dense1, nonlinearity=lasagne.nonlinearities.tanh)
     l_dropout2 = DropoutLayer(l_dense1,p=0.5)
     l_dense2 = DenseLayer(l_dropout2, num_units=num_classes, nonlinearity=lasagne.nonlinearities.softmax)
@@ -120,6 +123,10 @@ npz_file = np.load('word2vec_full_repr.npz')
 data_train = floatX(npz_file['data_train'])
 labels_train = npz_file['labels_train']
 seq_lens_train = npz_file['seq_lens_train']
+
+data_test = floatX(npz_file['data_test'])
+labels_test = npz_file['labels_test']
+seq_lens_test = npz_file['seq_lens_test']
 
 print(data_train.shape, data_train.dtype)
 print(labels_train.shape, labels_train.dtype)
@@ -243,12 +250,12 @@ for i, p in enumerate(all_combinations):
 def worker_helper(params):
     return worker(data_train, labels_train, seq_lens_train, **params)
 
-from multiprocessing import Pool
-p = Pool()
-f = open('logs_nn.txt', mode='w')
-print(all_combinations,file=f)
-results = np.array(p.map(worker_helper, all_combinations))
-print(results,file=f)
+# from multiprocessing import Pool
+# p = Pool()
+# f = open('logs_nn.txt', mode='w')
+# print(all_combinations,file=f)
+# results = np.array(p.map(worker_helper, all_combinations))
+# print(results,file=f)
 
 # best_early_stop_loss = results[:,3].max()
 # ind = results[:,2].argmax()
@@ -262,4 +269,58 @@ print(results,file=f)
 # ind = results[:,1].argmax()
 # best_end_of_training_acc = results[]
 
+
+def worker_final_evaluation(num_iterations=1500, cv_every=100, **kwargs):
+    all_passed_args = locals()
+
+    filename = '__'.join('__'.join(kk+'='+str(vv) for kk, vv in v.items()) if isinstance(v, dict)
+                         else k+'='+str(v)
+                         for k,v in all_passed_args.items())
+    filename = 'best_nn__'+filename
+
+    encoder = LabelEncoder()
+
+    targets_training_actual = encoder.fit_transform(labels_train)
+    train_proc, test_proc, network = build_nn(**kwargs)
+
+    convergence_data_train = []
+    convergence_data_cv_y = []
+    convergence_data_cv_x = []
+    convergence_data_cv_acc = []
+    targets_test = encoder.transform(labels_test)
+
+    for i, (d_batch, t_batch, s_batch) in enumerate(get_actual_data(data_train,
+                                                     targets_training_actual,
+                                                     seq_lens_train,
+                                                     iterate_minibatches(np.arange(len(data_train)),
+                                                                         batchsize=20,
+                                                                         number_of_minibatches=(num_iterations+1)))):
+        loss, acc, pred = train_proc(d_batch,s_batch,t_batch)
+        print(d_batch.shape, t_batch.shape, s_batch.shape, i, loss, acc)
+        convergence_data_train.append(loss)
+
+        if i%cv_every == 0:
+            print(data_test.shape, seq_lens_test.shape, targets_test.shape)
+            loss_cv, acc_cv, pred_cv = test_proc(data_test,
+                                                 seq_lens_test,
+                                                 targets_test)
+            print("CROSS VAL:", loss_cv, acc_cv)
+            convergence_data_cv_y.append(loss_cv)
+            convergence_data_cv_x.append(i)
+            convergence_data_cv_acc.append(acc_cv)
+
+    fig = plt.figure()
+    plt.xlabel('Iterations')
+    plt.ylabel('Loss')
+    plt.ylim([0,2])
+    plt.title(' '.join(filename.split('__')))
+    plt.plot(convergence_data_train, color='green')
+    plt.plot(convergence_data_cv_x, convergence_data_cv_y, '--rx')
+    fig.savefig(path+filename+'.png', dpi=400)
+    plt.close(fig)
+
+
+best_params = {'num_units_lstm': 300, 'num_units_dense1': 300, 'worker_name': 'W15'}
+del best_params['worker_name']
+worker_final_evaluation(**best_params)
 
